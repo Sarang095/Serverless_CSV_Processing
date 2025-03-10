@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: 'S3 to DynamoDB CSV Processing Architecture'
+
+Resources:
+  # S3 Bucket for CSV uploads
+  CsvBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: csv-upload-bucket
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Function: !GetAtt CsvProcessorFunction.Arn
+
+  # Permission for S3 to invoke Lambda
+  S3InvokeLambdaPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref CsvProcessorFunction
+      Principal: 's3.amazonaws.com'
+      SourceArn: !GetAtt CsvBucket.Arn
+
+  # DynamoDB table for storing CSV data
+  CsvDataTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: csv-data
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  # Lambda layer for pandas dependency
+  PandasLayer:
+    Type: 'AWS::Serverless::LayerVersion'
+    Properties:
+      LayerName: pandas-layer
+      Description: Layer containing pandas and its dependencies
+      ContentUri: ./pandas_layer/
+      CompatibleRuntimes:
+        - python3.12
+
+  # Lambda function for processing CSV
+  CsvProcessorFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: csv-processor
+      CodeUri: ./src/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.12
+      Timeout: 180
+      MemorySize: 512
+      Layers:
+        - !Ref PandasLayer
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref CsvBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CsvDataTable
+
+Outputs:
+  BucketName:
+    Description: "S3 Bucket for CSV uploads"
+    Value: !Ref CsvBucket
+  TableName:
+    Description: "DynamoDB Table for CSV data"
+    Value: !Ref CsvDataTable
+  FunctionName:
+    Description: "Lambda Function"
+    Value: !Ref CsvProcessorFunction

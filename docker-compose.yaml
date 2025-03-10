@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  localstack:
+    container_name: localstack-main
+    image: localstack/localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,dynamodb,lambda
+      - DATA_DIR=/var/lib/localstack
+      - SERVER_MAX_BODY_SIZE=1073741824  
+      - LAMBDA_EXECUTOR_MAX_CONTAINER_SIZE=2048  
+    volumes:
+      - "./localstack-data:/var/lib/localstack"
+      - //var/run/docker.sock:/var/run/docker.sock
