@@ -1,0 +1,1 @@
+{"statusCode": 200, "body": "\"Successfully processed 4 records from sample_data.csv\""}
