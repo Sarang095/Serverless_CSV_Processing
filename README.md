@@ -6,8 +6,7 @@ This project demonstrates an event-driven architecture using AWS services (run l
 
 ## Architecture
 
-![Architecture Diagram](https://via.placeholder.com/800x400)
-
+![Image](https://github.com/user-attachments/assets/ac01068a-37fc-40a3-aa35-8ed0c608b35a)
 ### Key Components:
 
 - **S3 Bucket**: Storage for uploaded CSV files
